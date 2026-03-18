@@ -20,3 +20,5 @@
 crash.log
 success.txt
 .terraform.tfstate.lock.info
+master_node_token
+node-token
