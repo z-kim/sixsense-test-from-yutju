@@ -22,3 +22,11 @@ success.txt
 .terraform.tfstate.lock.info
 master_node_token
 node-token
+
+# 5. Application Directory (인프라와 분리)
+app/
+**/app/
+
+# (선택 사항) 만약 특정 빌드 파일만 제외하고 싶다면
+# app/dist/
+# app/node_modules/
