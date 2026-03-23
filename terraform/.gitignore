@@ -19,7 +19,7 @@ override.tf.json
 *.pem
 *.key
 *.pub
-
+*.Identifier
 # 5. 테라폼 로그 및 크래시 리포트
 crash.log
 *.log

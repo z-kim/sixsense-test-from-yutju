@@ -64,6 +64,7 @@ resource "aws_instance" "bastion" {
   associate_public_ip_address = true
   iam_instance_profile        = aws_iam_instance_profile.ansible_profile.name
   private_ip = var.bastion_private_ip
+  disable_api_termination = var.switch
 
   tags = {
     Name    = "Bastion-Host"
@@ -84,6 +85,7 @@ resource "aws_instance" "nat_instance" {
   source_dest_check = false
   iam_instance_profile   = aws_iam_instance_profile.ansible_profile.name 
   private_ip = var.nat_private_ip
+  disable_api_termination = var.switch
 
   user_data = <<-EOF
     #!/bin/bash
@@ -115,6 +117,7 @@ resource "aws_instance" "k3s_master" {
   key_name               = var.key_name
   iam_instance_profile   = aws_iam_instance_profile.ansible_profile.name
   private_ip = var.k3s_master_private_ip
+  disable_api_termination = var.switch
 
   depends_on = [aws_instance.nat_instance]
 
@@ -134,7 +137,8 @@ resource "aws_instance" "k3s_worker" {
   vpc_security_group_ids = [aws_security_group.private_sg.id]
   key_name               = var.key_name
   iam_instance_profile   = aws_iam_instance_profile.ansible_profile.name
-  private_ip = var.k3s_worker_private_ip
+  # private_ip = var.k3s_worker_private_ip #프라이빗 ip 삭제
+  disable_api_termination = var.switch
 
   depends_on = [aws_instance.k3s_master]
 
@@ -153,7 +157,8 @@ resource "aws_instance" "k3s_worker_2" {
   vpc_security_group_ids = [aws_security_group.private_sg.id]
   key_name               = var.key_name
   iam_instance_profile   = aws_iam_instance_profile.ansible_profile.name
-  private_ip             = var.k3s_worker_2_private_ip
+  # private_ip             = var.k3s_worker_2_private_ip #프라이빗 ip 삭제
+  disable_api_termination = var.switch
 
   depends_on = [aws_instance.k3s_master]
 
@@ -173,11 +178,12 @@ resource "aws_instance" "k3s_worker_2" {
 resource "aws_instance" "kafka_server" {
   ami                    = var.ami_id
   instance_type          = var.instance_type
-  subnet_id              = aws_subnet.private_subnet_2.id
+  subnet_id              = aws_subnet.private_subnet_1.id
   vpc_security_group_ids = [aws_security_group.private_sg.id]
   key_name               = var.key_name
   iam_instance_profile   = aws_iam_instance_profile.ansible_profile.name
   private_ip = var.kafka_private_ip
+  disable_api_termination = var.switch
 
   depends_on = [aws_instance.nat_instance]
 
@@ -197,6 +203,7 @@ resource "aws_instance" "grafana_server" {
   key_name               = var.key_name
   iam_instance_profile   = aws_iam_instance_profile.ansible_profile.name
   private_ip = var.grafana_private_ip
+  disable_api_termination = var.switch
 
   depends_on = [aws_instance.nat_instance]
 
@@ -234,7 +241,8 @@ resource "aws_db_instance" "rds_instance" {
   db_subnet_group_name   = aws_db_subnet_group.rds_sg_group.name
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
   skip_final_snapshot    = true
-
+  deletion_protection    = var.switch
+  
   tags = { 
     Name    = "SixSense-RDS"
     Role    = "rds"         # RDS 식별용 태그

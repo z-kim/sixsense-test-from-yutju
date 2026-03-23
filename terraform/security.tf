@@ -1,16 +1,24 @@
 # security.tf
 # ============================================================
-# Bastion Host SG (수정 없음)
+# Bastion Host SG
 # ============================================================
 resource "aws_security_group" "bastion_sg" {
   name        = "bastion-sg"
   vpc_id      = aws_vpc.main.id
-
+  #SSH 접속
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"] 
+  }
+
+  # HTTPS
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -20,7 +28,7 @@ resource "aws_security_group" "bastion_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = { Name = "bastion-sg" }
+  tags = { Name = "dmz-group" }
 }
 
 # ============================================================
@@ -52,7 +60,7 @@ resource "aws_security_group" "nat_sg" {
 # Private Service SG (K3s, Kafka, Grafana, Prometheus용 공용)
 # ============================================================
 resource "aws_security_group" "private_sg" {
-  name        = "private-service-sg"
+  name        = "srv-group"
   vpc_id      = aws_vpc.main.id
 
   # 1. SSH 관리 (Bastion에서만 가능)

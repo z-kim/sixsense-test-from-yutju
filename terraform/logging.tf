@@ -1,4 +1,4 @@
-# dns.tf
+# logging.tf
 # 1. 로그를 저장할 전용 S3 버킷 생성
 resource "aws_s3_bucket" "vpc_flow_logs_storage" {
   bucket = "sixsense-vpc-flow-logs-${random_string.suffix.result}" # 전 세계 유일한 이름 생성, 통합할떄는 새로운 버킷을 만들어야 한다.

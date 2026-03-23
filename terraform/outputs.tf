@@ -16,8 +16,13 @@ output "k3s_master_private_ip" {
 }
 
 output "k3s_worker_private_ip" {
-  description = "K3s Worker 노드 프라이빗 IP"
+  description = "K3s Worker 노드 프라이빗 IP(동적 할당)"
   value       = aws_instance.k3s_worker.private_ip
+}
+
+output "k3s_worker_2_private_ip" {
+  description = "K3s Worker 노드 2 프라이빗 IP (동적 할당)"
+  value       = aws_instance.k3s_worker_2.private_ip
 }
 
 # ============================================================
