@@ -199,7 +199,7 @@ resource "aws_instance" "grafana_server" {
   ami                    = var.ami_id
   instance_type          = "c7i-flex.large"
   subnet_id              = aws_subnet.private_subnet_2.id
-  vpc_security_group_ids = [aws_security_group.private_sg.id]
+  vpc_security_group_ids = [aws_security_group.mgt_sg.id]
   key_name               = var.key_name
   iam_instance_profile   = aws_iam_instance_profile.ansible_profile.name
   private_ip = var.grafana_private_ip
