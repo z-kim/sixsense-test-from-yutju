@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TERRAFORM_DIR="$SCRIPT_DIR/../terraform"
 
 # [핵심] 키 파일 이름을 환경 변수로 받거나, 없으면 기본값 사용
-KEY_NAME="${KEY_NAME:-practice.pem}"
+KEY_NAME="${KEY_NAME:-sixsense-test.pem}"
 KEY_PATH="$SCRIPT_DIR/../$KEY_NAME"
 
 echo ">>> 프로젝트 루트: $(cd "$SCRIPT_DIR/.." && pwd)"
