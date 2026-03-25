@@ -9,7 +9,7 @@
     - { role: common, tags: common }
     - { role: chrony, tags: chrony }
 
-# 2. 모든 서버 리소스 모니터링을 위한 Node Exporter 설치 (추가됨)
+# 2. 모든 서버 리소스 모니터링을 위한 Node Exporter 설치
 - name: 2. 전 서버 Node Exporter 설치 및 실행(k3s 클러스터 제외)
   hosts:  "all:!master:!worker"
   become: yes
