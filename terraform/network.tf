@@ -114,25 +114,22 @@ resource "aws_lb" "main_alb" {
 }
 
 resource "aws_lb_target_group" "k3s_tg" {
-  name     = "k3s-target-group"
-  port     = 30080
-  protocol = "HTTP"
-  vpc_id   = aws_vpc.main.id
+  name        = "k3s-target-group"
+  port        = 30080
+  protocol    = "HTTP"
+  target_type = "instance"
+  vpc_id      = aws_vpc.main.id
 
   health_check {
     path                = "/"
-    interval            = 30
+    matcher             = "200-404"
+    interval            = 20
     timeout             = 5
     healthy_threshold   = 2
     unhealthy_threshold = 2
   }
 }
 
-resource "aws_lb_target_group_attachment" "master_attach" {
-  target_group_arn = aws_lb_target_group.k3s_tg.arn
-  target_id        = aws_instance.k3s_master.id
-  port             = 80
-}
 
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.main_alb.arn

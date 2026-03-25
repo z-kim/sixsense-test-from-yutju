@@ -13,3 +13,11 @@ aws_region: "ap-northeast-2"
 
 prometheus_host: "{{ groups['monitoring'][0] }}" # 모니터링 그룹의 첫 번째 서버
 prometheus_port: 9090
+
+#4.k3s 컨트롤플레인용
+k3s_server_write_kubeconfig_mode: "644"
+k3s_server_disable_components:
+  - traefik
+  - servicelb
+k3s_server_node_labels:
+  - node-role.k3s-project.io/control-plane=true

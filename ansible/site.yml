@@ -29,6 +29,17 @@
 - name: 3. K3s 마스터 설치 및 검증
   hosts: master
   become: yes
+  pre_tasks:
+  - name: Read k3s token from Terraform output
+    delegate_to: localhost
+    become: false
+    command: terraform -chdir=../terraform output -raw k3s_token
+    register: terraform_k3s_token
+    changed_when: false
+
+  - name: Set k3s_token fact
+    set_fact:
+      k3s_token: "{{ terraform_k3s_token.stdout }}"
   roles:
     - { role: k3s_master, tags: k3s_master }
   tasks:
@@ -43,18 +54,7 @@
           - "K3s 마스터 노드가 준비되었습니다!"
           - "현재 노드 상태: {{ master_status.stdout_lines }}"
 
-# 4. K3s 워커 설치 및 클러스터 조인
-- name: 4. K3s 워커 설치 및 클러스터 조인
-  hosts: worker
-  become: yes
-  roles:
-    - { role: k3s_worker, tags: k3s_worker }
-  tasks:
-    - name: 워커 설치 완료 메시지
-      debug:
-        msg: "K3s 워커 에이전트가 실행 중입니다. 마스터에서 조인 여부를 확인하세요."
-
-# 5. 최종 클러스터 연동 확인 (마스터에서 전체 노드 점검)
+# 4. 최종 클러스터 연동 확인 (마스터에서 전체 노드 점검)
 - name: 5. 최종 클러스터 연동 검증
   hosts: master
   become: yes
@@ -70,7 +70,7 @@
           - "모든 노드가 클러스터에 성공적으로 조인되었습니다."
           - "{{ cluster_nodes.stdout_lines }}"
 
-# 6. 프로메테우스(Prometheus) 설치
+# 5. 프로메테우스(Prometheus) 설치
 - name: 6. 프로메테우스 설치 및 검증
   hosts: monitoring
   become: yes
@@ -82,7 +82,7 @@
       register: prom_status
       changed_when: false
 
-# 7. 그라파나(Grafana) 설치 및 데이터소스 자동 연동
+# 6. 그라파나(Grafana) 설치 및 데이터소스 자동 연동
 - name: 7. 그라파나 설치 및 검증
   hosts: monitoring
   become: yes
@@ -97,7 +97,7 @@
       debug:
         msg: "Grafana 대시보드가 정상 작동 중이며 Prometheus가 자동 연동되었습니다."
 
-# 8. Kafka 클러스터 구성 (KRaft 모드)
+# 7. Kafka 클러스터 구성 (KRaft 모드)
 - name: 8. Kafka 클러스터 구성
   hosts: kafka
   become: yes

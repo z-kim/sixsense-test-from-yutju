@@ -114,6 +114,14 @@ resource "aws_security_group" "private_sg" {
     self        = true 
   }
 
+  ingress {
+    description = "K3s node-to-node internal traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    self        = true
+  }
+
   # 3. Kafka (9092), MySQL(3306), Node Exporter(9100)
   ingress {
     from_port   = 9092

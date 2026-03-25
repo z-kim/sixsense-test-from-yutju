@@ -1,56 +1,85 @@
 ---
-# 1. K3s 설치 여부 확인
+- name: k3s_token 변수 존재 확인
+  assert:
+    that:
+      - k3s_token is defined
+      - k3s_token | length > 0
+    fail_msg: "k3s_token 을 Terraform output 기반으로 전달해야 합니다."
+  tags: [k3s_master, token]
+
 - name: K3s 마스터 바이너리 설치 여부 확인
   stat:
     path: /usr/local/bin/k3s
   register: k3s_bin
-  tags: [ k3s_master, k3s_install ]
+  tags: [k3s_master, k3s_install]
 
-# 2. 미설치 시에만 설치 진행
+- name: k3s config 디렉터리 생성
+  file:
+    path: /etc/rancher/k3s
+    state: directory
+    mode: "0755"
+  tags: [k3s_master, config]
+
+- name: k3s config 렌더링
+  template:
+    src: config.yaml.j2
+    dest: /etc/rancher/k3s/config.yaml
+    mode: "0644"
+  notify:
+    - restart k3s
+  tags: [k3s_master, config]
+
+- name: K3s 설치 스크립트 다운로드
+  get_url:
+    url: https://get.k3s.io
+    dest: /usr/local/src/get-k3s.sh
+    mode: "0755"
+  tags: [k3s_master, k3s_install]
+
 - name: K3s 마스터 설치 실행
-  shell: curl -sfL https://get.k3s.io | sh -
+  command: /usr/local/src/get-k3s.sh
+  environment:
+    INSTALL_K3S_EXEC: server
+    K3S_TOKEN: "{{ k3s_token }}"
   when: not k3s_bin.stat.exists
   notify:
     - daemon-reload
     - restart k3s
-  tags: [ k3s_master, k3s_install ]
+  tags: [k3s_master, k3s_install]
 
-# 3. 마스터 노드 토큰 추출 (설치 여부와 상관없이 매번 실행)
-# 워커 노드가 조인하려면 항상 이 토큰 정보가 메모리에 있어야 합니다.
-- name: 마스터 노드 토큰 추출 (slurp 모듈 사용)
-  slurp:
-    src: /var/lib/rancher/k3s/server/node-token
-  register: master_token_encoded
-  tags: [ k3s_master, token ]
-
-# 4. 추출된 토큰을 전역 변수로 저장
-- name: 추출된 토큰을 변수로 저장
-  set_fact:
-    join_token: "{{ master_token_encoded['content'] | b64decode | trim }}"
-  tags: [ k3s_master, token ]
-
-# 5. 로컬 PC에 토큰 백업
-- name: 추출된 토큰을 로컬 파일로 백업
-  local_action:
-    module: copy
-    content: "{{ join_token }}"
-    dest: "./master_node_token"
-  become: no
-  tags: [ k3s_master, token ]
-
-# 6. 외부에서 kubectl 접근이 가능하도록 설정 권한 변경
-- name: kubectl 설정 파일 권한 변경 (644 권한)
-  file:
-    path: /etc/rancher/k3s/k3s.yaml
-    mode: '0644'
-    owner: root
-    group: root
-  tags: [ k3s_master, config ]
-
-# 7. 마스터 서비스 상태 유지 및 활성화
 - name: K3s 마스터 서비스 시작 및 활성화
   service:
     name: k3s
     state: started
     enabled: yes
-  tags: [ k3s_master, service ]
+    daemon_reload: yes
+  tags: [k3s_master, service]
+
+- name: k3s 서비스 환경 파일 렌더링
+  template:
+    src: k3s.service.env.j2
+    dest: /etc/systemd/system/k3s.service.env
+    mode: "0600"
+  notify:
+    - daemon-reload
+    - restart k3s
+  tags: [k3s_master, config]
+
+- name: kubeconfig 디렉터리 생성
+  file:
+    path: "/home/{{ ansible_user }}/.kube"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+  tags: [k3s_master, config]
+
+- name: 사용자 kubeconfig 복사
+  copy:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: "/home/{{ ansible_user }}/.kube/config"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0600"
+    remote_src: true
+  tags: [k3s_master, config]

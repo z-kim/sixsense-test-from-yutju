@@ -15,16 +15,6 @@ output "k3s_master_private_ip" {
   value       = aws_instance.k3s_master.private_ip
 }
 
-output "k3s_worker_private_ip" {
-  description = "K3s Worker 노드 프라이빗 IP(동적 할당)"
-  value       = aws_instance.k3s_worker.private_ip
-}
-
-output "k3s_worker_2_private_ip" {
-  description = "K3s Worker 노드 2 프라이빗 IP (동적 할당)"
-  value       = aws_instance.k3s_worker_2.private_ip
-}
-
 # ============================================================
 # Infrastructure Services (Private Subnet 2)
 # ============================================================
@@ -52,4 +42,14 @@ output "rds_endpoint" {
 output "alb_dns_name" {
   description = "웹 서비스 접속용 로드밸런서(ALB) 도메인 주소"
   value       = aws_lb.main_alb.dns_name
+}
+
+
+# ============================================================
+# K3S token
+# ============================================================
+output "k3s_token" {
+  description = "K3s join token"
+  value       = random_password.k3s_token.result
+  sensitive   = true
 }

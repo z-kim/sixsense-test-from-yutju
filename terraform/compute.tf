@@ -108,6 +108,12 @@ resource "aws_instance" "nat_instance" {
 # [Private Subnet 1] K3s Cluster
 # ============================================================
 
+#k3s에 사용할 토큰
+resource "random_password" "k3s_token" {
+  length  = 48
+  special = false
+}
+
 # K3s Master 노드
 resource "aws_instance" "k3s_master" {
   ami                    = var.ami_id
@@ -130,46 +136,86 @@ resource "aws_instance" "k3s_master" {
 }
 
 # K3s Worker 노드
-resource "aws_instance" "k3s_worker" {
-  ami                    = var.ami_id
-  instance_type          = "t3.small"
-  subnet_id              = aws_subnet.private_subnet_1.id
+resource "aws_launch_template" "k3s_worker" {
+  name_prefix   = "k3s-worker-"
+  image_id      = var.ami_id
+  instance_type = "t3.small"
+  key_name      = var.key_name
+
   vpc_security_group_ids = [aws_security_group.private_sg.id]
-  key_name               = var.key_name
-  iam_instance_profile   = aws_iam_instance_profile.ansible_profile.name
-  # private_ip = var.k3s_worker_private_ip #프라이빗 ip 삭제
-  disable_api_termination = var.switch
 
-  depends_on = [aws_instance.k3s_master]
+  iam_instance_profile {
+    name = aws_iam_instance_profile.ansible_profile.name
+  }
 
-  tags = {
-    Name    = "K3s-Worker-1"
-    Role    = "worker"      # Ansible 그룹: @worker
-    Project = "SixSense"
-    Monitor = "true"
+  user_data = base64encode(<<-EOF
+    #!/bin/bash
+    set -euxo pipefail
+
+    apt-get update -y
+    apt-get install -y curl
+
+    curl -sfL https://get.k3s.io | \
+      K3S_URL="https://${aws_instance.k3s_master.private_ip}:6443" \
+      K3S_TOKEN="${random_password.k3s_token.result}" \
+      INSTALL_K3S_EXEC="agent --node-label node-role.k3s-project.io/worker=true --node-label workload=general" \
+      sh -
+  EOF
+  )
+
+  tag_specifications {
+    resource_type = "instance"
+
+    tags = {
+      Name    = "K3s-Worker"
+      Role    = "worker"
+      Project = "SixSense"
+      Monitor = "true"
+    }
   }
 }
 
-resource "aws_instance" "k3s_worker_2" {
-  ami                    = var.ami_id
-  instance_type          = "t3.small"
-  subnet_id              = aws_subnet.private_subnet_1.id
-  vpc_security_group_ids = [aws_security_group.private_sg.id]
-  key_name               = var.key_name
-  iam_instance_profile   = aws_iam_instance_profile.ansible_profile.name
-  # private_ip             = var.k3s_worker_2_private_ip #프라이빗 ip 삭제
-  disable_api_termination = var.switch
+resource "aws_autoscaling_group" "k3s_worker" {
+  name                      = "k3s-worker-asg"
+  desired_capacity          = 2
+  min_size                  = 2
+  max_size                  = 2
+  vpc_zone_identifier       = [aws_subnet.private_subnet_1.id]
+  target_group_arns         = [aws_lb_target_group.k3s_tg.arn]
+  health_check_type         = "EC2"
+  health_check_grace_period = 300
+
+  launch_template {
+    id      = aws_launch_template.k3s_worker.id
+    version = "$Latest"
+  }
+
+  tag {
+    key                 = "Name"
+    value               = "K3s-Worker"
+    propagate_at_launch = true
+  }
+
+  tag {
+    key                 = "Role"
+    value               = "worker"
+    propagate_at_launch = true
+  }
+
+  tag {
+    key                 = "Project"
+    value               = "SixSense"
+    propagate_at_launch = true
+  }
+
+  tag {
+    key                 = "Monitor"
+    value               = "true"
+    propagate_at_launch = true
+  }
 
   depends_on = [aws_instance.k3s_master]
-
-  tags = {
-    Name    = "K3s-Worker-2"
-    Role    = "worker"       # Ansible 그룹: @worker (동일하게 유지)
-    Project = "SixSense"
-    Monitor = "true"       
-  }
 }
-
 # ============================================================
 # [Private Subnet 2] Infra Services (Kafka, Grafana)
 # ============================================================
