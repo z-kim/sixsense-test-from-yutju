@@ -5,7 +5,7 @@
 variable "switch" {
   description = "EC2 인스턴스 종료 방지 (true: 보호됨 / false: 삭제 가능)"
   type        = bool
-  default     = false
+  default     = true
 }
 
 # ============================================================

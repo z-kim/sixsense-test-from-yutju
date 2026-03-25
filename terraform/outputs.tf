@@ -53,3 +53,22 @@ output "k3s_token" {
   value       = random_password.k3s_token.result
   sensitive   = true
 }
+
+# ============================================================
+# 앱 서버 환경 변수 주입용 S3 및 IAM 정보
+# ============================================================
+output "s3_bucket_name" {
+  description = "앱 서버가 사용할 S3 버킷 이름"
+  value       = aws_s3_bucket.pdf_storage.bucket
+}
+
+output "aws_access_key_id" {
+  description = "앱 서버 IAM Access Key ID"
+  value       = aws_iam_access_key.app_user_key.id
+}
+
+output "aws_secret_access_key" {
+  description = "앱 서버 IAM Secret Access Key"
+  value       = aws_iam_access_key.app_user_key.secret
+  sensitive   = true # 화면 출력 방지 (보안)
+}

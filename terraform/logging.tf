@@ -10,7 +10,7 @@ resource "aws_s3_bucket" "vpc_flow_logs_storage" {
   }
 }
 
-# 2. 비용 절감을 위한 S3 수명 주기 설정 (90일 후 자동 삭제)
+# 2. 비용 절감을 위한 S3 수명 주기 설정 (20일 후 자동 삭제)
 resource "aws_s3_bucket_lifecycle_configuration" "logs_lifecycle" {
   bucket = aws_s3_bucket.vpc_flow_logs_storage.id
 
@@ -19,7 +19,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "logs_lifecycle" {
     status = "Enabled"
 
     expiration {
-      days = 90 # 90일이 지난 로그는 자동으로 파기
+      days = 20 # 20일이 지난 로그는 자동으로 파기
     }
   }
 }
