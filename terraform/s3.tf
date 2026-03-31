@@ -121,7 +121,7 @@ resource "aws_s3_bucket_public_access_block" "backup_storage_block" {
 }
 
 # ============================================================
-# 9. 백업 버킷 수명 주기 (Lifecycle) - 15일 후 자동 삭제
+# 9. 백업 버킷 수명 주기 (Lifecycle) - 2일 후 자동 삭제
 # ============================================================
 resource "aws_s3_bucket_lifecycle_configuration" "backup_lifecycle" {
   bucket = aws_s3_bucket.backup_storage.id
@@ -131,7 +131,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "backup_lifecycle" {
     status = "Enabled"
 
     expiration {
-      days = 15 # [Comment]: 15일이 지난 시스템 백업 파일은 자동 파기
+      days = 2
     }
   }
 }

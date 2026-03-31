@@ -95,6 +95,32 @@ resource "aws_iam_role_policy_attachment" "worker_ec2_readonly" {
   role       = aws_iam_role.worker_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
 }
+
+resource "aws_iam_policy" "worker_pdf_s3_policy" {
+  name        = "sixsense-worker-pdf-s3-policy"
+  description = "Policy for Worker Role to access PDF S3 bucket"
+  
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = ["s3:ListBucket"]
+        Resource = ["arn:aws:s3:::sixsense-pdf-storage-*"] 
+      },
+      {
+        Effect = "Allow"
+        Action = ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"]
+        Resource = ["arn:aws:s3:::sixsense-pdf-storage-*/*"]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "worker_pdf_attach" {
+  role       = aws_iam_role.worker_role.name
+  policy_arn = aws_iam_policy.worker_pdf_s3_policy.arn
+}
 # ============================================================
 # Bastion Host (Public 서브넷)
 # ============================================================
