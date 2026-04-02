@@ -80,16 +80,6 @@ variable "k3s_master_private_ip" {
   default     = "192.168.110.10"
 }
 
-/*variable "k3s_worker_private_ip" {
-  description = "K3s Worker 노드 프라이빗 IP"
-  default     = "10.0.11.20"
-}
-
-variable "k3s_worker_2_private_ip" {
-  description = "K3s Worker 노드 2 프라이빗 IP"
-  default     = "10.0.11.30"
-}*/
-
 variable "kafka_private_ip" {
   description = "Kafka 서버 프라이빗 IP"
   default     = "192.168.110.40"
@@ -100,3 +90,8 @@ variable "grafana_private_ip" {
   default     = "192.168.120.10"
 }
 
+variable "db_password" {
+  description = "RDS MySQL 마스터 비밀번호"
+  type        = string
+  sensitive   = true
+}

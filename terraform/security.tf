@@ -289,3 +289,14 @@ resource "aws_security_group_rule" "allow_prometheus_to_bastion" {
   source_security_group_id = aws_security_group.mgt_sg.id       # 출발지: Mgt Group (Prometheus)
   description              = "Allow Prometheus Server to scrape metrics from Bastion"
 }
+
+# 3. Prometheus가 Server Farm(private_sg)의 30080(Ingress NodePort) 메트릭을 수집하도록 허용
+resource "aws_security_group_rule" "allow_prometheus_to_app_metrics" {
+  type                     = "ingress"
+  from_port                = 30080
+  to_port                  = 30080
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.private_sg.id   # 타겟: Server Farm (워커 노드)
+  source_security_group_id = aws_security_group.mgt_sg.id       # 출발지: Mgt Group (Prometheus)
+  description              = "Allow Prometheus to scrape App metrics via NodePort"
+}

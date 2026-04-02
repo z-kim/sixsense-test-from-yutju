@@ -1,0 +1,37 @@
+---
+# roles/restore/tasks/main.yml
+# 0. aws_s3 모듈이 AWS와 통신하기 위해 필요한 필수 파이썬 패키지를 먼저 설치합니다.
+- name: "S3 통신 및 검색용 필수 패키지 설치"
+  ansible.builtin.apt:
+    name:
+      - python3-boto3
+      - awscli  # [핵심] 깡통 서버에서 aws 명령어를 쓸 수 있게 추가!
+    state: present
+    update_cache: yes
+# [Comment]: 1. S3의 'backups/' 폴더에서 현재 서버 IP가 들어간 최신 파일을 찾습니다.
+- name: S3에서 해당 서버의 최신 백업 파일 이름 검색
+  ansible.builtin.shell: >
+    aws s3 ls s3://{{ backup_bucket_name }}/{{ backup_prefix }} | grep 'ip-{{ origin_ip | default(inventory_hostname) | replace(".", "-") }}' | sort | tail -n 1 | awk '{print $4}'
+  register: latest_backup_file_name
+
+# 앤서블이 도대체 무슨 파일을 찾았는지 화면에 출력
+- name: "[디버그] 찾은 백업 파일 이름 확인"
+  ansible.builtin.debug:
+    msg: "S3에서 다운로드할 파일: {{ latest_backup_file_name.stdout }}"
+
+# 2. 찾아낸 백업 파일을 로컬 임시 폴더(/tmp)로 다운로드합니다.
+- name: 최신 백업 파일 다운로드
+  amazon.aws.aws_s3:
+    bucket: "{{ backup_bucket_name }}"
+    object: "{{ backup_prefix }}{{ latest_backup_file_name.stdout }}"
+    dest: "/tmp/restore_target.tar.gz"
+    mode: get
+
+# 3. 통째로 백업된 파일을 최상위 경로(/)에 풀어서 덮어씌웁니다.
+# /etc, /var/log, /home/ubuntu 폴더들이 원래 자리를 찾아갑니다.
+- name: 시스템 전체 환경 및 데이터 복구 (압축 해제)
+  ansible.builtin.unarchive:
+    src: "/tmp/restore_target.tar.gz"
+    dest: "/" 
+    remote_src: yes
+

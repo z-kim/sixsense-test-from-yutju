@@ -14,6 +14,7 @@ override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
+*.tfvars
 
 # 4. SSH 키 및 개인 인증 파일
 *.pem

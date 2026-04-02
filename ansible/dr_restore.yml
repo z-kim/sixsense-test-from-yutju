@@ -1,0 +1,8 @@
+---
+- name: SixSense 복구 시스템 (Recovery)
+  hosts: all 
+  become: yes
+
+  # 복구 작업(Restore Role)을 실행합니다.
+  roles:
+    - role: restore
