@@ -121,6 +121,48 @@ resource "aws_iam_role_policy_attachment" "worker_pdf_attach" {
   role       = aws_iam_role.worker_role.name
   policy_arn = aws_iam_policy.worker_pdf_s3_policy.arn
 }
+
+# ============================================================
+# Grafana 아테나 및 S3 접근 권한 추가
+# ============================================================
+
+resource "aws_iam_role_policy_attachment" "grafana_athena_access" {
+  role       = aws_iam_role.ansible_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonAthenaFullAccess"
+}
+
+resource "aws_iam_policy" "grafana_athena_s3_policy" {
+  name        = "sixsense-grafana-athena-s3-policy"
+  description = "Policy for Grafana to access Athena and Flow Logs S3 buckets"
+  
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetBucketLocation",
+          "s3:GetObject",
+          "s3:ListBucket",
+          "s3:ListBucketMultipartUploads",
+          "s3:ListMultipartUploadParts",
+          "s3:AbortMultipartUpload",
+          "s3:PutObject"
+        ]
+        Resource = [
+          "${aws_s3_bucket.vpc_flow_logs_storage.arn}",
+          "${aws_s3_bucket.vpc_flow_logs_storage.arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "grafana_athena_s3_attach" {
+  role       = aws_iam_role.ansible_role.name
+  policy_arn = aws_iam_policy.grafana_athena_s3_policy.arn
+}
+
 # ============================================================
 # Bastion Host (Public 서브넷)
 # ============================================================
