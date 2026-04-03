@@ -3,11 +3,12 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
+  # 0. Prometheus 자체 모니터링
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
 
-  # 1. EC2 Service Discovery (기존 노드 익스포터 수집)
+  # 1. EC2 Service Discovery (Node Exporter - 9100)
   - job_name: 'ec2-nodes'
     ec2_sd_configs:
       - region: ap-northeast-2
@@ -20,27 +21,30 @@ scrape_configs:
         target_label: instance
       - source_labels: [__meta_ec2_tag_Role]
         target_label: role
+
+      # Private IP에 Node Exporter 포트(9100) 결합
       - source_labels: [__meta_ec2_private_ip]
+        regex: '(.*)'
         replacement: '${1}:9100'
         target_label: __address__
 
-  #  2. 워커 노드별 개별 웹 메트릭 수집 (대소문자 무시 필터 적용)
+  # 2. SixSense App (워커 노드 전용 웹 메트릭 - 30081)
   - job_name: 'sixsense-app-pods'
     metrics_path: '/metrics'
     scheme: http
     ec2_sd_configs:
       - region: ap-northeast-2
-        port: 30080
+        port: 30081  #  30081로 변경
     relabel_configs:
-      # 대소문자 가리지 않고 'worker'가 포함된 태그를 찾습니다.
+      # 대소문자 구분 없이 'worker' 태그가 포함된 인스턴스만 필터링
       - source_labels: [__meta_ec2_tag_Role]
         regex: '(?i)worker'
         action: keep
-
       - source_labels: [__meta_ec2_tag_Name]
         target_label: instance
 
-      # 프라이빗 IP 주소에 인그레스 노드포트(30080)를 결합
+      # 프라이빗 IP에 새로운 NodePort(30081)를 결합
       - source_labels: [__meta_ec2_private_ip]
-        replacement: '${1}:30080'
+        regex: '(.*)'
+        replacement: '${1}:30081'
         target_label: __address__
