@@ -474,3 +474,21 @@ resource "aws_iam_role_policy_attachment" "k3s_master_ssm_attach" {
   role       = aws_iam_role.ansible_role.name
   policy_arn = aws_iam_policy.argocd_ssm_policy.arn
 }
+
+# ============================================================
+# DR 테스트용 Bastion Host (시연용)
+# ============================================================
+resource "aws_instance" "test_bastion" {
+  ami                    = var.ami_id                       
+  instance_type          = "t3.micro"                       
+  subnet_id              = aws_subnet.public_subnet_a.id    
+  vpc_security_group_ids = [aws_security_group.bastion_sg.id]
+  key_name               = var.key_name                     
+  private_ip             = "192.168.100.99"
+  iam_instance_profile   = aws_iam_instance_profile.ansible_profile.name
+
+  tags = {
+    Name    = "Test-Bastion-Restore-Demo"
+    Project = "SixSense"
+  }
+}
