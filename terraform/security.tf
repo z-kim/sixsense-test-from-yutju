@@ -256,7 +256,14 @@ resource "aws_security_group" "rds_sg" {
     protocol         = "tcp"
     security_groups  = [aws_security_group.mgt_sg.id]
   }
-
+  ingress {
+    description     = "MySQL from Bastion Host"
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.bastion_sg.id]
+  }
+  
   tags = { Name = "rds-sg" }
 }
 

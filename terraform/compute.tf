@@ -419,6 +419,7 @@ resource "aws_db_instance" "rds_instance" {
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
   skip_final_snapshot    = true
   deletion_protection    = var.switch
+  apply_immediately      = true
   
   tags = { 
     Name    = "SixSense-RDS"
