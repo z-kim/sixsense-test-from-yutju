@@ -441,3 +441,35 @@ resource "aws_eip_association" "eip_assoc" {
   instance_id   = aws_instance.bastion.id
   allocation_id = data.aws_eip.bastion_eip.id
 }
+
+# ============================================================
+# ArgoCD Github App SSM 접근 권한 추가 (K3s Master용)
+# ============================================================
+resource "aws_iam_policy" "argocd_ssm_policy" {
+  name        = "sixsense-argocd-ssm-policy"
+  description = "Allow K3s Master to read ArgoCD Github App credentials from SSM Parameter Store"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+          "ssm:GetParametersByPath"
+        ]
+
+        Resource = [
+          "arn:aws:ssm:*:*:parameter/sixsense/argocd/github-app",
+          "arn:aws:ssm:*:*:parameter/sixsense/argocd/github-app/*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "k3s_master_ssm_attach" {
+  role       = aws_iam_role.ansible_role.name
+  policy_arn = aws_iam_policy.argocd_ssm_policy.arn
+}
