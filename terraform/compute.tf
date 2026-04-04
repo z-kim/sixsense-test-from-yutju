@@ -250,9 +250,15 @@ resource "aws_instance" "k3s_master" {
 resource "aws_launch_template" "k3s_worker" {
   name_prefix   = "k3s-worker-"
   image_id      = var.ami_id
-  instance_type = "t3.small"
+  instance_type = "c7i-flex.large"
   key_name      = var.key_name
 
+  instance_market_options { #스팟 인스턴스
+    market_type = "spot"
+    spot_options {
+      max_price = "0.05"
+    }
+  }
   vpc_security_group_ids = [aws_security_group.private_sg.id]
 
   iam_instance_profile {
@@ -475,7 +481,7 @@ resource "aws_iam_role_policy_attachment" "k3s_master_ssm_attach" {
   policy_arn = aws_iam_policy.argocd_ssm_policy.arn
 }
 
-# ============================================================
+/*# ============================================================
 # DR 테스트용 Bastion Host (시연용)
 # ============================================================
 resource "aws_instance" "test_bastion" {
@@ -491,4 +497,4 @@ resource "aws_instance" "test_bastion" {
     Name    = "Test-Bastion-Restore-Demo"
     Project = "SixSense"
   }
-}
+}*/

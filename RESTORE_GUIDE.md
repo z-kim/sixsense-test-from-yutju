@@ -41,6 +41,11 @@ Step 2: 앤서블로 데이터 및 설정 주입 (Ansible)
 S3의 최신 백업 데이터를 신규 서버에 이식합니다.
 
 상황별 실행 예시
+
+전체 복구
+cd ../ansible
+ansible-playbook -i inventory/aws_ec2.yml dr_restore.yml
+
 Kafka 서버(110.40)가 터졌을 때:
 cd ../ansible
 ansible-playbook -i inventory/aws_ec2.yml dr_restore.yml \
