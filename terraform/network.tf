@@ -40,7 +40,7 @@ resource "aws_subnet" "public_subnet_d" {
   tags = { Name = "public-subnet-d" }
 }
 
-# Private Subnet 1 (K3s Cluster 위치)
+# Private Subnet 1 (K3s Cluster 위치, , RDS 위치)
 resource "aws_subnet" "private_subnet_1" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.private_subnet_cidr_1
@@ -48,7 +48,7 @@ resource "aws_subnet" "private_subnet_1" {
   tags = { Name = "private-subnet-1" }
 }
 
-# Private Subnet 2 (Kafka, Monitoring, RDS 위치)
+# Private Subnet 2 (Kafka, Monitoring)
 resource "aws_subnet" "private_subnet_2" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.private_subnet_cidr_2
